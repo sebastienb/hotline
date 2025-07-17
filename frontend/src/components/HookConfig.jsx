@@ -91,6 +91,17 @@ export default function HookConfig({ sounds }) {
     }
   }
 
+  const previewSound = async (filename) => {
+    if (!filename) return
+    
+    try {
+      const audio = new Audio(`/api/sounds/play/${filename}`)
+      await audio.play()
+    } catch (error) {
+      console.error('Failed to preview sound:', error)
+    }
+  }
+
   const generateHooksConfig = () => {
     const hooksConfig = {}
     
@@ -217,18 +228,37 @@ export default function HookConfig({ sounds }) {
                   
                   <div>
                     <label className="block text-sm font-medium mb-1">Sound Effect</label>
-                    <select
-                      value={config[hookType]?.sound || ''}
-                      onChange={(e) => updateHookConfig(hookType, 'sound', e.target.value)}
-                      className="w-full p-2 border rounded-md text-sm"
-                    >
-                      <option value="">No sound</option>
-                      {sounds.map(sound => (
-                        <option key={sound.filename} value={sound.filename}>
-                          {sound.filename}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex space-x-2">
+                      <select
+                        value={config[hookType]?.sound || ''}
+                        onChange={(e) => {
+                          const newSound = e.target.value
+                          updateHookConfig(hookType, 'sound', newSound)
+                          // Preview the sound when selected
+                          if (newSound) {
+                            previewSound(newSound)
+                          }
+                        }}
+                        className="flex-1 p-2 border rounded-md text-sm"
+                      >
+                        <option value="">No sound</option>
+                        {sounds.map(sound => (
+                          <option key={sound.filename} value={sound.filename}>
+                            {sound.filename}
+                          </option>
+                        ))}
+                      </select>
+                      
+                      {config[hookType]?.sound && (
+                        <button
+                          onClick={() => previewSound(config[hookType].sound)}
+                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm flex items-center"
+                          title="Preview sound"
+                        >
+                          🔊
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="flex items-center">
