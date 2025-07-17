@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@theme {
+  /* Monokai color palette */
+  --color-monokai-bg: #272822;
+  --color-monokai-bgLight: #3E3D32;
+  --color-monokai-bgDark: #1E1F1C;
+  --color-monokai-pink: #F92672;
+  --color-monokai-green: #A6E22E;
+  --color-monokai-yellow: #E6DB74;
+  --color-monokai-orange: #FD971F;
+  --color-monokai-purple: #AE81FF;
+  --color-monokai-cyan: #66D9EF;
+  --color-monokai-text: #F8F8F2;
+  --color-monokai-textMuted: #75715E;
+  --color-monokai-selection: #49483E;
+  --color-monokai-border: #49483E;
+  --color-monokai-hover: #3E3D32;
+}
+
+@variant dark (.dark &);

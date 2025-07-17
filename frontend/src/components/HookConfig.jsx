@@ -180,16 +180,16 @@ export default function HookConfig({ sounds }) {
     <div className="space-y-6">
       <NotificationSettings />
       
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Hook Configuration</h2>
+      <div className="bg-white dark:bg-monokai-bgLight rounded-lg shadow dark:shadow-monokai-border/20 p-6 border border-gray-200 dark:border-monokai-border">
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-monokai-text">Hook Configuration</h2>
         
         <div className="space-y-6">
           {HOOK_TYPES.map(hookType => (
-            <div key={hookType} className="border rounded-lg p-4">
+            <div key={hookType} className="border border-gray-200 dark:border-monokai-border rounded-lg p-4 bg-gray-50 dark:bg-monokai-bg">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-medium text-lg">{hookType}</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-medium text-lg text-gray-900 dark:text-monokai-text">{hookType}</h3>
+                  <p className="text-sm text-gray-600 dark:text-monokai-textMuted">
                     {hookType === 'PreToolUse' && 'Runs before tool execution'}
                     {hookType === 'PostToolUse' && 'Runs after tool execution'}
                     {hookType === 'Notification' && 'Runs on Claude Code notifications'}
@@ -206,7 +206,7 @@ export default function HookConfig({ sounds }) {
                     onChange={(e) => updateHookConfig(hookType, 'enabled', e.target.checked)}
                     className="mr-2"
                   />
-                  <span className="text-sm">Enable</span>
+                  <span className="text-sm text-gray-700 dark:text-monokai-text">Enable</span>
                 </label>
               </div>
               
@@ -214,20 +214,20 @@ export default function HookConfig({ sounds }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(hookType === 'PreToolUse' || hookType === 'PostToolUse') && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tool Matcher</label>
+                      <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-monokai-text">Tool Matcher</label>
                       <input
                         type="text"
                         placeholder="e.g., Write, Edit|Write, Bash.*"
                         value={config[hookType]?.matcher || ''}
                         onChange={(e) => updateHookConfig(hookType, 'matcher', e.target.value)}
-                        className="w-full p-2 border rounded-md text-sm"
+                        className="w-full p-2 border border-gray-300 dark:border-monokai-border rounded-md text-sm bg-white dark:bg-monokai-bgDark text-gray-900 dark:text-monokai-text placeholder-gray-500 dark:placeholder-monokai-textMuted focus:ring-2 focus:ring-blue-500 dark:focus:ring-monokai-green focus:border-transparent"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Leave empty to match all tools</p>
+                      <p className="text-xs text-gray-500 dark:text-monokai-textMuted mt-1">Leave empty to match all tools</p>
                     </div>
                   )}
                   
                   <div>
-                    <label className="block text-sm font-medium mb-1">Sound Effect</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-monokai-text">Sound Effect</label>
                     <div className="flex space-x-2">
                       <select
                         value={config[hookType]?.sound || ''}
@@ -239,7 +239,7 @@ export default function HookConfig({ sounds }) {
                             previewSound(newSound)
                           }
                         }}
-                        className="flex-1 p-2 border rounded-md text-sm"
+                        className="flex-1 p-2 border border-gray-300 dark:border-monokai-border rounded-md text-sm bg-white dark:bg-monokai-bgDark text-gray-900 dark:text-monokai-text focus:ring-2 focus:ring-blue-500 dark:focus:ring-monokai-green focus:border-transparent"
                       >
                         <option value="">No sound</option>
                         {sounds.map(sound => (
@@ -252,7 +252,7 @@ export default function HookConfig({ sounds }) {
                       {config[hookType]?.sound && (
                         <button
                           onClick={() => previewSound(config[hookType].sound)}
-                          className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm flex items-center"
+                          className="px-3 py-2 bg-green-600 dark:bg-monokai-green text-white dark:text-monokai-bg rounded-md hover:bg-green-700 dark:hover:bg-monokai-green/80 text-sm flex items-center transition-colors"
                           title="Preview sound"
                         >
                           🔊
@@ -269,12 +269,12 @@ export default function HookConfig({ sounds }) {
                         onChange={(e) => updateHookConfig(hookType, 'notifications', e.target.checked)}
                         className="mr-2"
                       />
-                      <span className="text-sm">Browser Notifications</span>
+                      <span className="text-sm text-gray-700 dark:text-monokai-text">Browser Notifications</span>
                     </label>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium mb-1">Timeout (seconds)</label>
+                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-monokai-text">Timeout (seconds)</label>
                     <input
                       type="number"
                       min="1"
@@ -293,21 +293,21 @@ export default function HookConfig({ sounds }) {
         <div className="flex flex-wrap gap-3 mt-6">
           <button
             onClick={() => setShowPreview(!showPreview)}
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 border border-gray-300 dark:border-monokai-border rounded-md hover:bg-gray-50 dark:hover:bg-monokai-hover text-gray-700 dark:text-monokai-text bg-white dark:bg-monokai-bgLight transition-colors"
           >
             {showPreview ? 'Hide' : 'Show'} JSON Preview
           </button>
           
           <button
             onClick={() => saveConfig('global')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 dark:bg-monokai-cyan text-white dark:text-monokai-bg rounded-md hover:bg-blue-700 dark:hover:bg-monokai-cyan/80 transition-colors"
           >
             Save to Global (~/.claude/settings.json)
           </button>
           
           <button
             onClick={() => saveConfig('project')}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            className="px-4 py-2 bg-green-600 dark:bg-monokai-green text-white dark:text-monokai-bg rounded-md hover:bg-green-700 dark:hover:bg-monokai-green/80 transition-colors"
           >
             Save to Project (.claude/settings.json)
           </button>
@@ -315,8 +315,8 @@ export default function HookConfig({ sounds }) {
         
         {showPreview && (
           <div className="mt-4">
-            <h3 className="font-medium mb-2">Generated Configuration</h3>
-            <pre className="bg-gray-100 p-4 rounded-md overflow-auto text-sm">
+            <h3 className="font-medium mb-2 text-gray-900 dark:text-monokai-text">Generated Configuration</h3>
+            <pre className="bg-gray-100 dark:bg-monokai-bgDark p-4 rounded-md overflow-auto text-sm text-gray-800 dark:text-monokai-text border border-gray-200 dark:border-monokai-border">
               {JSON.stringify({ hooks: previewConfig }, null, 2)}
             </pre>
           </div>

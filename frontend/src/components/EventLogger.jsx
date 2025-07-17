@@ -152,24 +152,24 @@ export default function EventLogger({ newLogEntry }) {
 
   const getHookColor = (hookType) => {
     switch (hookType) {
-      case 'PreToolUse': return 'text-blue-600 bg-blue-100'
-      case 'PostToolUse': return 'text-green-600 bg-green-100'
-      case 'Notification': return 'text-yellow-600 bg-yellow-100'
-      case 'Stop': return 'text-red-600 bg-red-100'
-      case 'SubagentStop': return 'text-purple-600 bg-purple-100'
-      case 'PreCompact': return 'text-gray-600 bg-gray-100'
-      default: return 'text-gray-600 bg-gray-100'
+      case 'PreToolUse': return 'text-blue-600 dark:text-monokai-cyan bg-blue-100 dark:bg-monokai-cyan/20'
+      case 'PostToolUse': return 'text-green-600 dark:text-monokai-green bg-green-100 dark:bg-monokai-green/20'
+      case 'Notification': return 'text-yellow-600 dark:text-monokai-yellow bg-yellow-100 dark:bg-monokai-yellow/20'
+      case 'Stop': return 'text-red-600 dark:text-monokai-pink bg-red-100 dark:bg-monokai-pink/20'
+      case 'SubagentStop': return 'text-purple-600 dark:text-monokai-purple bg-purple-100 dark:bg-monokai-purple/20'
+      case 'PreCompact': return 'text-gray-600 dark:text-monokai-textMuted bg-gray-100 dark:bg-monokai-textMuted/20'
+      default: return 'text-gray-600 dark:text-monokai-textMuted bg-gray-100 dark:bg-monokai-textMuted/20'
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-monokai-bgLight rounded-lg shadow dark:shadow-monokai-border/20 p-6 border border-gray-200 dark:border-monokai-border">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <h2 className="text-xl font-semibold">Event Logger</h2>
-            <div className="flex items-center space-x-2 px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-monokai-text">Event Logger</h2>
+            <div className="flex items-center space-x-2 px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-monokai-green/20 text-green-800 dark:text-monokai-green">
+              <div className="w-2 h-2 rounded-full bg-green-500 dark:bg-monokai-green"></div>
               <span>Real-time</span>
             </div>
           </div>
@@ -178,14 +178,14 @@ export default function EventLogger({ newLogEntry }) {
             <button
               onClick={exportLogs}
               disabled={logs.length === 0}
-              className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-sm bg-blue-600 dark:bg-monokai-cyan text-white dark:text-monokai-bg rounded-md hover:bg-blue-700 dark:hover:bg-monokai-cyan/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               📊 Export CSV
             </button>
             
             <button
               onClick={testSound}
-              className="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="px-3 py-2 text-sm bg-green-600 dark:bg-monokai-green text-white dark:text-monokai-bg rounded-md hover:bg-green-700 dark:hover:bg-monokai-green/80 transition-colors"
             >
               🔊 Test Sound
             </button>
@@ -193,7 +193,7 @@ export default function EventLogger({ newLogEntry }) {
             <button
               onClick={clearLogs}
               disabled={logs.length === 0}
-              className="px-3 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-sm bg-red-600 dark:bg-monokai-pink text-white dark:text-monokai-bg rounded-md hover:bg-red-700 dark:hover:bg-monokai-pink/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               🗑️ Clear Logs
             </button>
@@ -203,11 +203,11 @@ export default function EventLogger({ newLogEntry }) {
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
-            <label className="block text-sm font-medium mb-1">Hook Type</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-monokai-text">Hook Type</label>
             <select
               value={filters.hookType}
               onChange={(e) => setFilters(prev => ({ ...prev, hookType: e.target.value }))}
-              className="w-full p-2 border rounded-md text-sm"
+              className="w-full p-2 border border-gray-300 dark:border-monokai-border rounded-md text-sm bg-white dark:bg-monokai-bgDark text-gray-900 dark:text-monokai-text placeholder-gray-500 dark:placeholder-monokai-textMuted focus:ring-2 focus:ring-blue-500 dark:focus:ring-monokai-green focus:border-transparent"
             >
               <option value="">All Types</option>
               <option value="PreToolUse">PreToolUse</option>
@@ -220,55 +220,55 @@ export default function EventLogger({ newLogEntry }) {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Session ID</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-monokai-text">Session ID</label>
             <input
               type="text"
               placeholder="Filter by session..."
               value={filters.sessionId}
               onChange={(e) => setFilters(prev => ({ ...prev, sessionId: e.target.value }))}
-              className="w-full p-2 border rounded-md text-sm"
+              className="w-full p-2 border border-gray-300 dark:border-monokai-border rounded-md text-sm bg-white dark:bg-monokai-bgDark text-gray-900 dark:text-monokai-text placeholder-gray-500 dark:placeholder-monokai-textMuted focus:ring-2 focus:ring-blue-500 dark:focus:ring-monokai-green focus:border-transparent"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Keyword</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-monokai-text">Keyword</label>
             <input
               type="text"
               placeholder="Search message or tool..."
               value={filters.keyword}
               onChange={(e) => setFilters(prev => ({ ...prev, keyword: e.target.value }))}
-              className="w-full p-2 border rounded-md text-sm"
+              className="w-full p-2 border border-gray-300 dark:border-monokai-border rounded-md text-sm bg-white dark:bg-monokai-bgDark text-gray-900 dark:text-monokai-text placeholder-gray-500 dark:placeholder-monokai-textMuted focus:ring-2 focus:ring-blue-500 dark:focus:ring-monokai-green focus:border-transparent"
             />
           </div>
         </div>
         
         {/* Logs Table */}
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border border-gray-200 dark:border-monokai-border rounded-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-monokai-bg">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-monokai-textMuted uppercase tracking-wider">
                     Timestamp
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-monokai-textMuted uppercase tracking-wider">
                     Hook Type
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-monokai-textMuted uppercase tracking-wider">
                     Tool Name
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-monokai-textMuted uppercase tracking-wider">
                     Message
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-monokai-textMuted uppercase tracking-wider">
                     Session
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-monokai-bgLight divide-y divide-gray-200 dark:divide-monokai-border">
                 {logs.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan="5" className="px-4 py-8 text-center text-gray-500 dark:text-monokai-textMuted">
                       <div className="text-2xl mb-2">📝</div>
                       <p>No log entries found</p>
                       <p className="text-sm">Hook events will appear here when they occur</p>
@@ -276,8 +276,8 @@ export default function EventLogger({ newLogEntry }) {
                   </tr>
                 ) : (
                   logs.map(log => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                    <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-monokai-hover transition-colors">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-monokai-text">
                         {new Date(log.timestamp).toLocaleString()}
                       </td>
                       <td className="px-4 py-3">
@@ -286,15 +286,15 @@ export default function EventLogger({ newLogEntry }) {
                           {log.hook_type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-monokai-text">
+                        <code className="bg-gray-100 dark:bg-monokai-bgDark px-2 py-1 rounded text-xs text-gray-800 dark:text-monokai-orange">
                           {log.tool_name || '-'}
                         </code>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-monokai-text max-w-xs truncate">
                         {log.message || '-'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 font-mono">
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-monokai-textMuted font-mono">
                         {log.session_id ? log.session_id.substring(0, 8) + '...' : '-'}
                       </td>
                     </tr>
@@ -311,7 +311,7 @@ export default function EventLogger({ newLogEntry }) {
             <button
               onClick={loadMore}
               disabled={loading}
-              className="px-4 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm bg-gray-600 dark:bg-monokai-textMuted text-white dark:text-monokai-text rounded-md hover:bg-gray-700 dark:hover:bg-monokai-textMuted/80 disabled:opacity-50 transition-colors"
             >
               {loading ? 'Loading...' : 'Load More'}
             </button>
@@ -319,16 +319,16 @@ export default function EventLogger({ newLogEntry }) {
         )}
         
         {/* Stats */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium text-sm mb-2">Log Statistics</h4>
+        <div className="mt-6 p-4 bg-gray-50 dark:bg-monokai-bg rounded-lg border border-gray-200 dark:border-monokai-border">
+          <h4 className="font-medium text-sm mb-2 text-gray-900 dark:text-monokai-text">Log Statistics</h4>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
-              <span className="text-gray-600">Total Entries:</span>
-              <span className="ml-2 font-medium">{logs.length}</span>
+              <span className="text-gray-600 dark:text-monokai-textMuted">Total Entries:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-monokai-text">{logs.length}</span>
             </div>
             <div>
-              <span className="text-gray-600">Database:</span>
-              <span className="ml-2 font-mono text-xs">~/.hotline/hooks.db</span>
+              <span className="text-gray-600 dark:text-monokai-textMuted">Database:</span>
+              <span className="ml-2 font-mono text-xs bg-gray-200 dark:bg-monokai-bgDark px-1 rounded text-gray-800 dark:text-monokai-orange">~/.hotline/hooks.db</span>
             </div>
           </div>
         </div>

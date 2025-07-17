@@ -98,15 +98,15 @@ export default function SoundManager({ sounds, onSoundsUpdate }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Sound Manager</h2>
+      <div className="bg-white dark:bg-monokai-bgLight rounded-lg shadow dark:shadow-monokai-border/20 p-6 border border-gray-200 dark:border-monokai-border">
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-monokai-text">Sound Manager</h2>
         
         {/* Upload Area */}
         <div 
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
             dragOver 
-              ? 'border-blue-400 bg-blue-50' 
-              : 'border-gray-300 hover:border-gray-400'
+              ? 'border-blue-400 dark:border-monokai-cyan bg-blue-50 dark:bg-monokai-hover' 
+              : 'border-gray-300 dark:border-monokai-border hover:border-gray-400 dark:hover:border-monokai-textMuted'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -115,13 +115,13 @@ export default function SoundManager({ sounds, onSoundsUpdate }) {
           <div className="space-y-4">
             <div className="text-4xl">🎵</div>
             <div>
-              <p className="text-lg font-medium">
+              <p className="text-lg font-medium text-gray-900 dark:text-monokai-text">
                 {dragOver ? 'Drop files here' : 'Upload Sound Files'}
               </p>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-monokai-textMuted">
                 Drag & drop MP3 or WAV files, or click to browse
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-monokai-textMuted">
                 Max file size: 10MB per file
               </p>
             </div>
@@ -138,7 +138,7 @@ export default function SoundManager({ sounds, onSoundsUpdate }) {
             
             <label
               htmlFor="sound-upload"
-              className={`inline-block px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700 transition-colors ${
+              className={`inline-block px-4 py-2 bg-blue-600 dark:bg-monokai-cyan text-white dark:text-monokai-bg rounded-md cursor-pointer hover:bg-blue-700 dark:hover:bg-monokai-cyan/80 transition-colors ${
                 uploading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -149,12 +149,12 @@ export default function SoundManager({ sounds, onSoundsUpdate }) {
         
         {/* Sound List */}
         <div className="mt-6">
-          <h3 className="font-medium mb-3">
+          <h3 className="font-medium mb-3 text-gray-900 dark:text-monokai-text">
             Uploaded Sounds ({sounds.length})
           </h3>
           
           {sounds.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-monokai-textMuted">
               <div className="text-2xl mb-2">🔇</div>
               <p>No sound files uploaded yet</p>
               <p className="text-sm">Upload some MP3 or WAV files to get started</p>
@@ -164,15 +164,15 @@ export default function SoundManager({ sounds, onSoundsUpdate }) {
               {sounds.map(sound => (
                 <div 
                   key={sound.filename} 
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-3 border border-gray-200 dark:border-monokai-border rounded-lg hover:bg-gray-50 dark:hover:bg-monokai-hover bg-white dark:bg-monokai-bg transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <div className="text-xl">
                       {sound.filename.endsWith('.mp3') ? '🎵' : '🎶'}
                     </div>
                     <div>
-                      <p className="font-medium">{sound.filename}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium text-gray-900 dark:text-monokai-text">{sound.filename}</p>
+                      <p className="text-sm text-gray-600 dark:text-monokai-textMuted">
                         {formatFileSize(sound.size)} • Modified {new Date(sound.modified).toLocaleDateString()}
                       </p>
                     </div>
@@ -181,7 +181,7 @@ export default function SoundManager({ sounds, onSoundsUpdate }) {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => playSound(sound.filename)}
-                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
+                      className="p-2 text-blue-600 dark:text-monokai-cyan hover:bg-blue-100 dark:hover:bg-monokai-hover rounded-md transition-colors"
                       title="Play sound"
                     >
                       ▶️
@@ -189,7 +189,7 @@ export default function SoundManager({ sounds, onSoundsUpdate }) {
                     
                     <button
                       onClick={() => deleteSound(sound.filename)}
-                      className="p-2 text-red-600 hover:bg-red-100 rounded-md transition-colors"
+                      className="p-2 text-red-600 dark:text-monokai-pink hover:bg-red-100 dark:hover:bg-monokai-hover rounded-md transition-colors"
                       title="Delete sound"
                     >
                       🗑️
@@ -202,12 +202,12 @@ export default function SoundManager({ sounds, onSoundsUpdate }) {
         </div>
         
         {/* Storage Info */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium text-sm mb-2">Storage Location</h4>
-          <p className="text-sm text-gray-600">
-            <code>~/.hotline/sounds/</code>
+        <div className="mt-6 p-4 bg-gray-50 dark:bg-monokai-bg rounded-lg border border-gray-200 dark:border-monokai-border">
+          <h4 className="font-medium text-sm mb-2 text-gray-900 dark:text-monokai-text">Storage Location</h4>
+          <p className="text-sm text-gray-600 dark:text-monokai-textMuted">
+            <code className="bg-gray-200 dark:bg-monokai-bgDark px-1 rounded text-gray-800 dark:text-monokai-orange">~/.hotline/sounds/</code>
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-monokai-textMuted mt-1">
             Sound files are stored locally in your home directory
           </p>
         </div>
