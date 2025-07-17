@@ -21,31 +21,40 @@ export default function HookConfig({ sounds }) {
 
   const fetchHooks = async () => {
     try {
-      const response = await fetch('/api/hooks')
-      const data = await response.json()
-      setHooks(data)
+      const [hooksResponse, uiConfigResponse] = await Promise.all([
+        fetch('/api/hooks'),
+        fetch('/api/hook-ui-config')
+      ])
       
-      // Convert to UI format
-      const uiConfig = {}
-      HOOK_TYPES.forEach(hookType => {
-        uiConfig[hookType] = {
-          enabled: !!data[hookType],
-          sound: '',
-          notifications: false,
-          timeout: 60,
-          matcher: ''
-        }
-        
-        if (data[hookType] && data[hookType][0]) {
-          const hookData = data[hookType][0]
-          if (hookData.matcher) {
-            uiConfig[hookType].matcher = hookData.matcher
+      const hooksData = await hooksResponse.json()
+      const uiConfigData = uiConfigResponse.ok ? await uiConfigResponse.json() : {}
+      
+      setHooks(hooksData)
+      
+      // Use saved UI config or create default
+      if (Object.keys(uiConfigData).length > 0) {
+        setConfig(uiConfigData)
+      } else {
+        // Convert to UI format for initial setup
+        const uiConfig = {}
+        HOOK_TYPES.forEach(hookType => {
+          uiConfig[hookType] = {
+            enabled: !!hooksData[hookType],
+            sound: '',
+            notifications: false,
+            timeout: 60,
+            matcher: ''
           }
-          // Extract sound and notification settings from command
-          // This is a simplified approach - in reality you'd parse the command
-        }
-      })
-      setConfig(uiConfig)
+          
+          if (hooksData[hookType] && hooksData[hookType][0]) {
+            const hookData = hooksData[hookType][0]
+            if (hookData.matcher) {
+              uiConfig[hookType].matcher = hookData.matcher
+            }
+          }
+        })
+        setConfig(uiConfig)
+      }
     } catch (error) {
       console.error('Failed to fetch hooks:', error)
     }
@@ -72,23 +81,12 @@ export default function HookConfig({ sounds }) {
       // Get the backend URL dynamically
       const backendUrl = window.location.origin
       
-      // Add sound command if sound is selected
-      if (settings.sound) {
-        commands.push({
-          type: "command",
-          command: `curl -s ${backendUrl}/api/sounds/play/${settings.sound} | aplay -q || afplay /dev/stdin 2>/dev/null`,
-          timeout: 5
-        })
-      }
-      
-      // Add notification command if enabled
-      if (settings.notifications) {
-        commands.push({
-          type: "command", 
-          command: `curl -X POST ${backendUrl}/api/logs -H "Content-Type: application/json" -d '{"hookType":"${hookType}","toolName":"${settings.matcher || 'All'}","message":"Hook triggered","sessionId":"'$session_id'"}'`,
-          timeout: 5
-        })
-      }
+      // Only add logging command - sounds will be handled by frontend
+      commands.push({
+        type: "command", 
+        command: `curl -X POST ${backendUrl}/api/logs -H "Content-Type: application/json" -d '{"hookType":"${hookType}","toolName":"${settings.matcher || 'All'}","message":"Hook triggered","sessionId":"'$session_id'"}'`,
+        timeout: 5
+      })
       
       if (commands.length > 0) {
         const hookConfig = {
@@ -111,7 +109,8 @@ export default function HookConfig({ sounds }) {
     try {
       const hooksConfig = generateHooksConfig()
       
-      const response = await fetch('/api/hooks', {
+      // Save Claude hooks configuration
+      const hooksResponse = await fetch('/api/hooks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -122,7 +121,16 @@ export default function HookConfig({ sounds }) {
         })
       })
       
-      if (response.ok) {
+      // Save UI configuration for frontend sound/notification handling
+      const uiConfigResponse = await fetch('/api/hook-ui-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(config)
+      })
+      
+      if (hooksResponse.ok && uiConfigResponse.ok) {
         alert(`Configuration saved to ${target} settings!`)
         await fetchHooks()
       } else {

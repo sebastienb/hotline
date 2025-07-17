@@ -6,12 +6,20 @@ import { dirname, join } from 'path';
 import fs from 'fs';
 import os from 'os';
 import Database from 'better-sqlite3';
+import { WebSocketServer } from 'ws';
+import { createServer } from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = 3001;
+
+// Create HTTP server
+const server = createServer(app);
+
+// Create WebSocket server
+const wss = new WebSocketServer({ server });
 
 // Middleware
 app.use(cors());
@@ -46,6 +54,33 @@ db.exec(`
     message TEXT
   )
 `);
+
+// WebSocket connection handling
+wss.on('connection', (ws) => {
+  console.log('Client connected to WebSocket');
+  
+  ws.on('close', () => {
+    console.log('Client disconnected from WebSocket');
+  });
+  
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+  });
+});
+
+// Function to broadcast new log entries to all connected clients
+const broadcastLogEntry = (logEntry) => {
+  const message = JSON.stringify({
+    type: 'newLog',
+    data: logEntry
+  });
+  
+  wss.clients.forEach((client) => {
+    if (client.readyState === client.OPEN) {
+      client.send(message);
+    }
+  });
+};
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -170,6 +205,13 @@ app.post('/api/logs', (req, res) => {
     
     const result = stmt.run(sessionId, hookType, toolName, message);
     
+    // Get the newly inserted log entry
+    const getStmt = db.prepare('SELECT * FROM logs WHERE id = ?');
+    const newLogEntry = getStmt.get(result.lastInsertRowid);
+    
+    // Broadcast to WebSocket clients
+    broadcastLogEntry(newLogEntry);
+    
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
     console.error('Error inserting log:', error);
@@ -252,6 +294,65 @@ app.get('/api/sounds/play/:filename', (req, res) => {
   }
 });
 
+// Get hook UI configuration
+app.get('/api/hook-ui-config', (req, res) => {
+  try {
+    const configPath = join(hotlineDir, 'hook-ui-config.json');
+    
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      res.json(config);
+    } else {
+      res.json({});
+    }
+  } catch (error) {
+    console.error('Error reading hook UI config:', error);
+    res.status(500).json({ error: 'Failed to read hook UI configuration' });
+  }
+});
+
+// Save hook UI configuration
+app.post('/api/hook-ui-config', (req, res) => {
+  try {
+    const config = req.body;
+    const configPath = join(hotlineDir, 'hook-ui-config.json');
+    
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+    
+    res.json({ success: true, path: configPath });
+  } catch (error) {
+    console.error('Error saving hook UI config:', error);
+    res.status(500).json({ error: 'Failed to save hook UI configuration' });
+  }
+});
+
+// Test endpoint to trigger a sample hook event
+app.post('/api/test-hook', (req, res) => {
+  try {
+    const testEvent = {
+      hook_type: 'PreToolUse',
+      tool_name: 'TestTool',
+      message: 'Test hook event to verify sound playback - simulating PreToolUse',
+      timestamp: new Date().toISOString()
+    };
+    
+    // Broadcast to all connected WebSocket clients
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(testEvent));
+      }
+    });
+    
+    res.json({ success: true, event: testEvent });
+  } catch (error) {
+    console.error('Error triggering test hook:', error);
+    res.status(500).json({ error: 'Failed to trigger test hook' });
+  }
+});
+
+// Serve static files from React build
+app.use(express.static(join(__dirname, '../frontend/dist')));
+
 // Serve frontend for all non-API routes
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
@@ -259,8 +360,9 @@ app.get('*', (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Hotline backend running on http://0.0.0.0:${PORT}`);
+  console.log(`WebSocket server running on ws://0.0.0.0:${PORT}`);
   
   // Get network interfaces to display available URLs
   const interfaces = os.networkInterfaces();

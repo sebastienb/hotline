@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { useNotifications } from '../hooks/useNotifications'
 
-export default function EventLogger() {
+export default function EventLogger({ newLogEntry }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({
@@ -13,10 +14,17 @@ export default function EventLogger() {
     offset: 0,
     hasMore: true
   })
+  const { showNotification } = useNotifications()
 
   useEffect(() => {
     fetchLogs(true) // Reset on mount
   }, [])
+
+  useEffect(() => {
+    if (newLogEntry) {
+      setLogs(prev => [newLogEntry, ...prev])
+    }
+  }, [newLogEntry])
 
   useEffect(() => {
     fetchLogs(true) // Reset when filters change
@@ -58,6 +66,32 @@ export default function EventLogger() {
   const loadMore = () => {
     if (!loading && pagination.hasMore) {
       fetchLogs(false)
+    }
+  }
+
+  const testSound = async () => {
+    console.log('🔊 Test Sound Button clicked - sending request to backend...')
+    try {
+      const response = await fetch('/api/test-hook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      console.log('📡 Backend response status:', response.status)
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('✅ Test hook triggered successfully, response data:', data)
+        console.log('⏰ Waiting for WebSocket message and sound to play...')
+      } else {
+        console.error('❌ Failed to trigger test hook, status:', response.status)
+        const errorText = await response.text()
+        console.error('Error details:', errorText)
+      }
+    } catch (error) {
+      console.error('💥 Error triggering test hook:', error)
     }
   }
 
@@ -121,7 +155,13 @@ export default function EventLogger() {
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Event Logger</h2>
+          <div className="flex items-center space-x-3">
+            <h2 className="text-xl font-semibold">Event Logger</h2>
+            <div className="flex items-center space-x-2 px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <span>Real-time</span>
+            </div>
+          </div>
           
           <div className="flex items-center space-x-2">
             <button
@@ -130,6 +170,13 @@ export default function EventLogger() {
               className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               📊 Export CSV
+            </button>
+            
+            <button
+              onClick={testSound}
+              className="px-3 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"
+            >
+              🔊 Test Sound
             </button>
             
             <button
