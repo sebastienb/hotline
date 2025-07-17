@@ -99,10 +99,21 @@ export default function EventLogger({ newLogEntry }) {
     if (!confirm('Clear all logs? This cannot be undone.')) return
     
     try {
-      // Note: This would need a DELETE endpoint in the backend
-      alert('Clear logs functionality would need to be implemented in the backend')
+      const response = await fetch('/api/logs', {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        setLogs([])
+        setPagination({ limit: 50, offset: 0, hasMore: true })
+        console.log(`Cleared ${result.deletedCount} log entries`)
+      } else {
+        throw new Error('Failed to clear logs')
+      }
     } catch (error) {
       console.error('Failed to clear logs:', error)
+      alert('Failed to clear logs. Please try again.')
     }
   }
 

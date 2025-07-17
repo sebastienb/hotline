@@ -219,6 +219,30 @@ app.post('/api/logs', (req, res) => {
   }
 });
 
+// Clear all logs
+app.delete('/api/logs', (req, res) => {
+  try {
+    const stmt = db.prepare('DELETE FROM logs');
+    const result = stmt.run();
+    
+    // Broadcast clear event to all WebSocket clients
+    const clearMessage = JSON.stringify({
+      type: 'clearLogs'
+    });
+    
+    wss.clients.forEach((client) => {
+      if (client.readyState === client.OPEN) {
+        client.send(clearMessage);
+      }
+    });
+    
+    res.json({ success: true, deletedCount: result.changes });
+  } catch (error) {
+    console.error('Error clearing logs:', error);
+    res.status(500).json({ error: 'Failed to clear logs' });
+  }
+});
+
 // Upload sound file
 app.post('/api/sounds', upload.single('sound'), (req, res) => {
   try {
