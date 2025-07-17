@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import HookConfig from './components/HookConfig'
 import SoundManager from './components/SoundManager'
 import EventLogger from './components/EventLogger'
+import { useNotifications } from './hooks/useNotifications'
 
 function App() {
   const [activeTab, setActiveTab] = useState('hooks')
@@ -9,6 +10,7 @@ function App() {
   const [hookConfig, setHookConfig] = useState({})
   const [newLogEntry, setNewLogEntry] = useState(null)
   const hookConfigRef = useRef({})
+  const { showNotification, requestPermission, permission } = useNotifications()
 
   useEffect(() => {
     fetchSounds()
@@ -39,12 +41,14 @@ function App() {
 
   const setupWebSocket = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}`
+    const host = window.location.hostname
+    const port = window.location.port === '3000' ? '3001' : '3001' // Backend always on 3001
+    const wsUrl = `${protocol}//${host}:${port}`
     console.log('🔌 Setting up WebSocket connection to:', wsUrl)
     const ws = new WebSocket(wsUrl)
     
     ws.onopen = () => {
-      console.log('✅ WebSocket connected successfully')
+      console.log('✅ WebSocket connected successfully to:', wsUrl)
     }
     
     ws.onmessage = (event) => {
@@ -53,12 +57,12 @@ function App() {
         const message = JSON.parse(event.data)
         console.log('📦 Parsed WebSocket message:', message)
         
-        if (message.type === 'hook_triggered' && message.data) {
-          console.log('🎯 Processing hook_triggered message with data')
-          handleNewLogEntry(message.data)
-        } else if (message.type === 'newLog' && message.data) {
+        if (message.type === 'newLog' && message.data) {
           console.log('🎯 Processing newLog message with data (real hook)')
           handleNewLogEntry(message.data)
+        } else if (message.type === 'clearLogs') {
+          console.log('🗑️ Processing clearLogs message')
+          // Handle clear logs if needed
         } else if (message.hook_type) {
           console.log('🎯 Processing direct hook message')
           handleNewLogEntry(message)
@@ -70,12 +74,13 @@ function App() {
       }
     }
     
-    ws.onclose = () => {
-      console.log('❌ WebSocket disconnected')
+    ws.onclose = (event) => {
+      console.log('❌ WebSocket disconnected. Code:', event.code, 'Reason:', event.reason)
     }
     
     ws.onerror = (error) => {
       console.error('💥 WebSocket error:', error)
+      console.error('Failed to connect to:', wsUrl)
     }
     
     return () => {
@@ -106,10 +111,17 @@ function App() {
     }
   }
 
-  const showNotification = (title, options = {}) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, options)
+  // Request notification permission on first hook that needs it
+  const ensureNotificationPermission = async () => {
+    if (permission !== 'granted') {
+      console.log('🔔 Requesting notification permission...')
+      const granted = await requestPermission()
+      if (!granted) {
+        console.log('🔕 Notification permission denied, will use fallback')
+      }
+      return granted
     }
+    return true
   }
 
   const handleNewLogEntry = (log) => {
@@ -117,6 +129,7 @@ function App() {
     console.log('🎯 HANDLE LOG ENTRY - Current hook config state:', hookConfig)
     console.log('🎯 HANDLE LOG ENTRY - Current hook config ref:', hookConfigRef.current)
     console.log('🎯 HANDLE LOG ENTRY - Available hook types in config:', Object.keys(hookConfigRef.current))
+    console.log('🎯 HANDLE LOG ENTRY - Looking for config for hook type:', log.hook_type)
     
     // Check if this hook type has sound configured
     const config = hookConfigRef.current[log.hook_type]
@@ -139,9 +152,11 @@ function App() {
     // Check if notifications are enabled for this hook type
     if (config && config.enabled && config.notifications) {
       console.log('🔔 HANDLE LOG ENTRY - Showing notification for hook type:', log.hook_type)
-      showNotification(`Hook Triggered: ${log.hook_type}`, {
-        body: `Tool: ${log.tool_name || 'N/A'}\nMessage: ${log.message || 'N/A'}`,
-        icon: '/favicon.ico'
+      ensureNotificationPermission().then(() => {
+        showNotification(`Hook Triggered: ${log.hook_type}`, {
+          body: `Tool: ${log.tool_name || 'N/A'}\nMessage: ${log.message || 'N/A'}`,
+          icon: '/favicon.ico'
+        })
       })
     } else {
       console.log('🔕 HANDLE LOG ENTRY - No notifications configured or hook disabled for:', log.hook_type)

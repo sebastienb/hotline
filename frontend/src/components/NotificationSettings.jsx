@@ -3,7 +3,15 @@ import { useNotifications } from '../hooks/useNotifications'
 export default function NotificationSettings() {
   const { supported, permission, requestPermission, showNotification, canNotify } = useNotifications()
 
-  const testNotification = () => {
+  const testNotification = async () => {
+    // Ensure permission is granted first
+    if (permission !== 'granted') {
+      const granted = await requestPermission()
+      if (!granted) {
+        return
+      }
+    }
+    
     showNotification('🔥 Hotline Test', {
       body: 'This is a test notification from Hotline!',
       tag: 'hotline-test'
@@ -74,20 +82,26 @@ export default function NotificationSettings() {
           </div>
         )}
 
-        {canNotify && (
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={testNotification}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
-            >
-              Test Notification
-            </button>
-            
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={testNotification}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+          >
+            Test Notification
+          </button>
+          
+          {canNotify && (
             <p className="text-sm text-green-600">
               Notifications are enabled and working!
             </p>
-          </div>
-        )}
+          )}
+          
+          {!canNotify && (
+            <p className="text-sm text-gray-600">
+              Click to test (will request permission if needed)
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 p-3 bg-gray-50 rounded-md">

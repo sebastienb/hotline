@@ -61,13 +61,34 @@ export default function HookConfig({ sounds }) {
   }
 
   const updateHookConfig = (hookType, field, value) => {
-    setConfig(prev => ({
-      ...prev,
+    const newConfig = {
+      ...config,
       [hookType]: {
-        ...prev[hookType],
+        ...config[hookType],
         [field]: value
       }
-    }))
+    }
+    
+    setConfig(newConfig)
+    
+    // Auto-save UI config for notification and sound settings
+    if (field === 'notifications' || field === 'sound') {
+      saveUIConfig(newConfig)
+    }
+  }
+  
+  const saveUIConfig = async (configToSave = config) => {
+    try {
+      await fetch('/api/hook-ui-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(configToSave)
+      })
+    } catch (error) {
+      console.error('Failed to save UI config:', error)
+    }
   }
 
   const generateHooksConfig = () => {

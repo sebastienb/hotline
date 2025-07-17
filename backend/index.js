@@ -354,20 +354,29 @@ app.post('/api/hook-ui-config', (req, res) => {
 app.post('/api/test-hook', (req, res) => {
   try {
     const testEvent = {
+      id: Date.now(),
       hook_type: 'PreToolUse',
       tool_name: 'TestTool',
       message: 'Test hook event to verify sound playback - simulating PreToolUse',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      session_id: 'test-session'
     };
     
-    // Broadcast to all connected WebSocket clients
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(testEvent));
-      }
-    });
+    // Also insert into database for consistency
+    const stmt = db.prepare(`
+      INSERT INTO logs (session_id, hook_type, tool_name, message)
+      VALUES (?, ?, ?, ?)
+    `);
+    const result = stmt.run(testEvent.session_id, testEvent.hook_type, testEvent.tool_name, testEvent.message);
     
-    res.json({ success: true, event: testEvent });
+    // Get the newly inserted log entry
+    const getStmt = db.prepare('SELECT * FROM logs WHERE id = ?');
+    const newLogEntry = getStmt.get(result.lastInsertRowid);
+    
+    // Broadcast to WebSocket clients using the same format as real logs
+    broadcastLogEntry(newLogEntry);
+    
+    res.json({ success: true, event: newLogEntry });
   } catch (error) {
     console.error('Error triggering test hook:', error);
     res.status(500).json({ error: 'Failed to trigger test hook' });
