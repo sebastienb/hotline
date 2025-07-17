@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useNotifications } from '../hooks/useNotifications'
 
 export default function NotificationSettings() {
+  const [isExpanded, setIsExpanded] = useState(false)
   const { supported, permission, requestPermission, showNotification, canNotify } = useNotifications()
 
   const testNotification = async () => {
@@ -51,9 +53,17 @@ export default function NotificationSettings() {
 
   return (
     <div className="bg-white border rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
+      <div 
+        className="flex items-center justify-between cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div>
-          <h3 className="font-medium text-gray-900">Browser Notifications</h3>
+          <h3 className="font-medium text-gray-900 flex items-center">
+            Browser Notifications
+            <span className="ml-2 text-gray-400 transform transition-transform duration-200">
+              {isExpanded ? '▼' : '▶'}
+            </span>
+          </h3>
           <p className="text-sm text-gray-600">
             Get desktop notifications when hooks trigger
           </p>
@@ -63,6 +73,9 @@ export default function NotificationSettings() {
           {status.text}
         </span>
       </div>
+
+      {isExpanded && (
+        <div className="mt-4 border-t pt-4 animate-in slide-in-from-top-2 duration-200">{/* Content container */}
 
       <div className="space-y-3">
         {permission !== 'granted' && (
@@ -113,6 +126,8 @@ export default function NotificationSettings() {
           <li>• Falls back to browser alerts if notifications fail</li>
         </ul>
       </div>
+        </div>
+      )}
     </div>
   )
 }
