@@ -198,6 +198,7 @@ app.post('/api/logs', (req, res) => {
   try {
     const { sessionId, hookType, toolName, message } = req.body;
     
+    
     const stmt = db.prepare(`
       INSERT INTO logs (session_id, hook_type, tool_name, message)
       VALUES (?, ?, ?, ?)

@@ -36,11 +36,9 @@ function App() {
       const response = await fetch('/api/hook-ui-config')
       if (response.ok) {
         const config = await response.json()
-        console.log('Loaded hook config:', config)
         setHookConfig(config)
         hookConfigRef.current = config
       } else {
-        console.log('No hook config found, using empty config')
         setHookConfig({})
         hookConfigRef.current = {}
       }
@@ -56,30 +54,22 @@ function App() {
     const host = window.location.hostname
     const port = window.location.port === '3000' ? '3001' : '3001' // Backend always on 3001
     const wsUrl = `${protocol}//${host}:${port}`
-    console.log('🔌 Setting up WebSocket connection to:', wsUrl)
     const ws = new WebSocket(wsUrl)
     
     ws.onopen = () => {
-      console.log('✅ WebSocket connected successfully to:', wsUrl)
     }
     
     ws.onmessage = (event) => {
-      console.log('📨 WebSocket message received:', event.data)
       try {
         const message = JSON.parse(event.data)
-        console.log('📦 Parsed WebSocket message:', message)
         
         if (message.type === 'newLog' && message.data) {
-          console.log('🎯 Processing newLog message with data (real hook)')
           handleNewLogEntry(message.data)
         } else if (message.type === 'clearLogs') {
-          console.log('🗑️ Processing clearLogs message')
           // Handle clear logs if needed
         } else if (message.hook_type) {
-          console.log('🎯 Processing direct hook message')
           handleNewLogEntry(message)
         } else {
-          console.log('⚠️ Unknown message format, ignoring:', message)
         }
       } catch (error) {
         console.error('💥 Error parsing WebSocket message:', error)
@@ -87,7 +77,6 @@ function App() {
     }
     
     ws.onclose = (event) => {
-      console.log('❌ WebSocket disconnected. Code:', event.code, 'Reason:', event.reason)
     }
     
     ws.onerror = (error) => {
@@ -96,30 +85,17 @@ function App() {
     }
     
     return () => {
-      console.log('🔌 Closing WebSocket connection')
       ws.close()
     }
   }
 
   const playSound = async (filename) => {
-    console.log('🎵 PLAY SOUND - Attempting to play sound file:', filename)
-    console.log('🎵 PLAY SOUND - Sound URL will be:', `/api/sounds/play/${filename}`)
     try {
       const audio = new Audio(`/api/sounds/play/${filename}`)
-      console.log('🎵 PLAY SOUND - Audio object created successfully')
-      
-      audio.addEventListener('loadstart', () => console.log('🎵 AUDIO EVENT - loadstart'))
-      audio.addEventListener('loadeddata', () => console.log('🎵 AUDIO EVENT - loadeddata'))
-      audio.addEventListener('canplay', () => console.log('🎵 AUDIO EVENT - canplay'))
-      audio.addEventListener('play', () => console.log('🎵 AUDIO EVENT - play started'))
-      audio.addEventListener('error', (e) => console.error('🎵 AUDIO ERROR:', e.error))
-      
-      console.log('🎵 PLAY SOUND - Calling audio.play()...')
+      audio.addEventListener('error', (e) => console.error('Failed to play sound:', e.error))
       await audio.play()
-      console.log('✅ PLAY SOUND - Sound played successfully!')
     } catch (error) {
-      console.error('❌ PLAY SOUND - Failed to play sound:', error)
-      console.error('❌ PLAY SOUND - Error details:', error.message)
+      console.error('Failed to play sound:', error)
     }
   }
 
@@ -137,54 +113,38 @@ function App() {
   }
 
   const handleNewLogEntry = (log) => {
-    console.log('🎯 HANDLE LOG ENTRY - New log entry received:', log)
-    console.log('🎯 HANDLE LOG ENTRY - Current hook config state:', hookConfig)
-    console.log('🎯 HANDLE LOG ENTRY - Current hook config ref:', hookConfigRef.current)
-    console.log('🎯 HANDLE LOG ENTRY - Available hook types in config:', Object.keys(hookConfigRef.current))
-    console.log('🎯 HANDLE LOG ENTRY - Looking for config for hook type:', log.hook_type)
+    // Check if this hook type has sound configured - config is now an array
+    const configArray = hookConfigRef.current[log.hook_type]
     
-    // Check if this hook type has sound configured
-    const config = hookConfigRef.current[log.hook_type]
-    console.log(`🎯 HANDLE LOG ENTRY - Config for hook type "${log.hook_type}":`, config)
-    
-    if (config && config.enabled) {
-      // Check for multiple sounds (new format) or single sound (legacy format)
-      const availableSounds = config.sounds 
-        ? config.sounds.filter(s => s !== '') 
-        : (config.sound ? [config.sound] : [])
-      
-      if (availableSounds.length > 0) {
-        // Pick a random sound from available sounds
-        const randomSound = availableSounds[Math.floor(Math.random() * availableSounds.length)]
-        console.log('✅ HANDLE LOG ENTRY - Playing random sound:', randomSound, 'from', availableSounds)
-        playSound(randomSound)
-      } else {
-        console.log('❌ HANDLE LOG ENTRY - No sounds configured for hook type')
-      }
-    } else {
-      console.log('❌ HANDLE LOG ENTRY - Hook disabled or not configured')
-      if (!config) {
-        console.log('   - No config found for hook type:', log.hook_type)
-      } else if (!config.enabled) {
-        console.log('   - Hook type is disabled')
-      }
-    }
-    
-    // Check if notifications are enabled for this hook type
-    if (config && config.enabled && config.notifications) {
-      console.log('🔔 HANDLE LOG ENTRY - Showing notification for hook type:', log.hook_type)
-      ensureNotificationPermission().then(() => {
-        showNotification(`Hook Triggered: ${log.hook_type}`, {
-          body: `Tool: ${log.tool_name || 'N/A'}\nMessage: ${log.message || 'N/A'}`,
-          icon: '/favicon.ico'
-        })
+    if (configArray && Array.isArray(configArray)) {
+      // Process each enabled configuration
+      configArray.forEach((config, index) => {
+        if (config && config.enabled) {
+          // Check for multiple sounds (new format) or single sound (legacy format)
+          const availableSounds = config.sounds 
+            ? config.sounds.filter(s => s !== '') 
+            : (config.sound ? [config.sound] : [])
+          
+          if (availableSounds.length > 0) {
+            // Pick a random sound from available sounds
+            const randomSound = availableSounds[Math.floor(Math.random() * availableSounds.length)]
+            playSound(randomSound)
+          }
+          
+          // Check if notifications are enabled for this configuration
+          if (config.notifications) {
+            ensureNotificationPermission().then(() => {
+              showNotification(`Hook Triggered: ${log.hook_type}`, {
+                body: `Tool: ${log.tool_name || 'N/A'}\nMessage: ${log.message || 'N/A'}`,
+                icon: '/favicon.ico'
+              })
+            })
+          }
+        }
       })
-    } else {
-      console.log('🔕 HANDLE LOG ENTRY - No notifications configured or hook disabled for:', log.hook_type)
     }
 
     // Pass the log entry to EventLogger if it's active
-    console.log('📋 HANDLE LOG ENTRY - Passing to EventLogger component')
     setNewLogEntry(log)
   }
 

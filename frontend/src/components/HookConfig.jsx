@@ -165,10 +165,11 @@ export default function HookConfig({ sounds }) {
         // Get the backend URL dynamically
         const backendUrl = window.location.origin
         
-        // Only add logging command - sounds will be handled by frontend
+        // Hook command that reads tool info from stdin and sends to API
+        // For now, using a hardcoded path - in production this should be configurable
         commands.push({
           type: "command", 
-          command: `curl -X POST ${backendUrl}/api/logs -H "Content-Type: application/json" -d '{"hookType":"${hookType}","toolName":"'"$TOOL_NAME"'","message":"Hook triggered","sessionId":"'"$session_id"'"}'`,
+          command: `python3 /Users/sebs/Projects/hotline/hook-handler.py`,
           timeout: 5
         })
         
