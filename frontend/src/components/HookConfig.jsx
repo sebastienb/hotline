@@ -33,23 +33,42 @@ export default function HookConfig({ sounds }) {
       
       // Use saved UI config or create default
       if (Object.keys(uiConfigData).length > 0) {
-        setConfig(uiConfigData)
+        // Migrate old sound format to new sounds array format and support multiple configurations
+        const migratedConfig = {}
+        Object.entries(uiConfigData).forEach(([hookType, settings]) => {
+          // If it's already an array (multiple configurations), keep it
+          if (Array.isArray(settings)) {
+            migratedConfig[hookType] = settings.map(config => ({
+              ...config,
+              sounds: config.sounds || (config.sound ? [config.sound, '', ''] : ['', '', ''])
+            }))
+          } else {
+            // Single configuration - convert to array
+            migratedConfig[hookType] = [{
+              ...settings,
+              sounds: settings.sounds || (settings.sound ? [settings.sound, '', ''] : ['', '', ''])
+            }]
+          }
+          // Remove old sound property if it exists
+          migratedConfig[hookType].forEach(config => delete config.sound)
+        })
+        setConfig(migratedConfig)
       } else {
         // Convert to UI format for initial setup
         const uiConfig = {}
         HOOK_TYPES.forEach(hookType => {
-          uiConfig[hookType] = {
+          uiConfig[hookType] = [{
             enabled: !!hooksData[hookType],
-            sound: '',
+            sounds: ['', '', ''],
             notifications: false,
             timeout: 60,
             matcher: ''
-          }
+          }]
           
           if (hooksData[hookType] && hooksData[hookType][0]) {
             const hookData = hooksData[hookType][0]
             if (hookData.matcher) {
-              uiConfig[hookType].matcher = hookData.matcher
+              uiConfig[hookType][0].matcher = hookData.matcher
             }
           }
         })
@@ -60,21 +79,51 @@ export default function HookConfig({ sounds }) {
     }
   }
 
-  const updateHookConfig = (hookType, field, value) => {
+  const updateHookConfig = (hookType, configIndex, field, value) => {
     const newConfig = {
       ...config,
-      [hookType]: {
-        ...config[hookType],
-        [field]: value
-      }
+      [hookType]: config[hookType].map((hookConfig, index) => 
+        index === configIndex ? { ...hookConfig, [field]: value } : hookConfig
+      )
     }
     
     setConfig(newConfig)
     
     // Auto-save UI config for notification and sound settings
-    if (field === 'notifications' || field === 'sound') {
+    if (field === 'notifications' || field === 'sounds') {
       saveUIConfig(newConfig)
     }
+  }
+  
+  const updateHookSound = (hookType, configIndex, soundIndex, value) => {
+    const currentConfig = config[hookType][configIndex]
+    const newSounds = [...(currentConfig?.sounds || ['', '', ''])]
+    newSounds[soundIndex] = value
+    updateHookConfig(hookType, configIndex, 'sounds', newSounds)
+  }
+  
+  const addHookConfig = (hookType) => {
+    const newConfig = {
+      ...config,
+      [hookType]: [...(config[hookType] || []), {
+        enabled: true,
+        sounds: ['', '', ''],
+        notifications: false,
+        timeout: 60,
+        matcher: ''
+      }]
+    }
+    setConfig(newConfig)
+    saveUIConfig(newConfig)
+  }
+  
+  const removeHookConfig = (hookType, configIndex) => {
+    const newConfig = {
+      ...config,
+      [hookType]: config[hookType].filter((_, index) => index !== configIndex)
+    }
+    setConfig(newConfig)
+    saveUIConfig(newConfig)
   }
   
   const saveUIConfig = async (configToSave = config) => {
@@ -105,32 +154,40 @@ export default function HookConfig({ sounds }) {
   const generateHooksConfig = () => {
     const hooksConfig = {}
     
-    Object.entries(config).forEach(([hookType, settings]) => {
-      if (!settings.enabled) return
+    Object.entries(config).forEach(([hookType, settingsArray]) => {
+      const hookConfigs = []
       
-      const commands = []
-      
-      // Get the backend URL dynamically
-      const backendUrl = window.location.origin
-      
-      // Only add logging command - sounds will be handled by frontend
-      commands.push({
-        type: "command", 
-        command: `curl -X POST ${backendUrl}/api/logs -H "Content-Type: application/json" -d '{"hookType":"${hookType}","toolName":"${settings.matcher || 'All'}","message":"Hook triggered","sessionId":"'$session_id'"}'`,
-        timeout: 5
+      settingsArray.forEach(settings => {
+        if (!settings.enabled) return
+        
+        const commands = []
+        
+        // Get the backend URL dynamically
+        const backendUrl = window.location.origin
+        
+        // Only add logging command - sounds will be handled by frontend
+        commands.push({
+          type: "command", 
+          command: `curl -X POST ${backendUrl}/api/logs -H "Content-Type: application/json" -d '{"hookType":"${hookType}","toolName":"'$TOOL_NAME'","message":"Hook triggered","sessionId":"'$session_id'"}'`,
+          timeout: 5
+        })
+        
+        if (commands.length > 0) {
+          const hookConfig = {
+            hooks: commands
+          }
+          
+          // Add matcher for PreToolUse and PostToolUse
+          if ((hookType === 'PreToolUse' || hookType === 'PostToolUse') && settings.matcher) {
+            hookConfig.matcher = settings.matcher
+          }
+          
+          hookConfigs.push(hookConfig)
+        }
       })
       
-      if (commands.length > 0) {
-        const hookConfig = {
-          hooks: commands
-        }
-        
-        // Add matcher for PreToolUse and PostToolUse
-        if ((hookType === 'PreToolUse' || hookType === 'PostToolUse') && settings.matcher) {
-          hookConfig.matcher = settings.matcher
-        }
-        
-        hooksConfig[hookType] = [hookConfig]
+      if (hookConfigs.length > 0) {
+        hooksConfig[hookType] = hookConfigs
       }
     })
     
@@ -199,18 +256,44 @@ export default function HookConfig({ sounds }) {
                   </p>
                 </div>
                 
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={config[hookType]?.enabled || false}
-                    onChange={(e) => updateHookConfig(hookType, 'enabled', e.target.checked)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-monokai-text">Enable</span>
-                </label>
+                <button
+                  onClick={() => addHookConfig(hookType)}
+                  className="px-3 py-1 bg-blue-600 dark:bg-monokai-blue text-white dark:text-monokai-bg rounded-md hover:bg-blue-700 dark:hover:bg-monokai-blue/80 text-sm transition-colors"
+                >
+                  + Add Configuration
+                </button>
               </div>
               
-              {config[hookType]?.enabled && (
+              {config[hookType] && config[hookType].length > 0 && (
+                <div className="space-y-4">
+                  {config[hookType].map((hookConfig, configIndex) => (
+                    <div key={configIndex} className="border border-gray-300 dark:border-monokai-border rounded-lg p-4 bg-white dark:bg-monokai-bgDark">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={hookConfig.enabled || false}
+                              onChange={(e) => updateHookConfig(hookType, configIndex, 'enabled', e.target.checked)}
+                              className="mr-2"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-monokai-text font-medium">
+                              Configuration {configIndex + 1}
+                            </span>
+                          </label>
+                        </div>
+                        
+                        {config[hookType].length > 1 && (
+                          <button
+                            onClick={() => removeHookConfig(hookType, configIndex)}
+                            className="px-2 py-1 bg-red-600 dark:bg-monokai-red text-white dark:text-monokai-bg rounded-md hover:bg-red-700 dark:hover:bg-monokai-red/80 text-sm transition-colors"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      
+                      {hookConfig.enabled && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(hookType === 'PreToolUse' || hookType === 'PostToolUse') && (
                     <div>
@@ -218,46 +301,50 @@ export default function HookConfig({ sounds }) {
                       <input
                         type="text"
                         placeholder="e.g., Write, Edit|Write, Bash.*"
-                        value={config[hookType]?.matcher || ''}
-                        onChange={(e) => updateHookConfig(hookType, 'matcher', e.target.value)}
+                        value={hookConfig.matcher || ''}
+                        onChange={(e) => updateHookConfig(hookType, configIndex, 'matcher', e.target.value)}
                         className="w-full p-2 border border-gray-300 dark:border-monokai-border rounded-md text-sm bg-white dark:bg-monokai-bgDark text-gray-900 dark:text-monokai-text placeholder-gray-500 dark:placeholder-monokai-textMuted focus:ring-2 focus:ring-blue-500 dark:focus:ring-monokai-green focus:border-transparent"
                       />
                       <p className="text-xs text-gray-500 dark:text-monokai-textMuted mt-1">Leave empty to match all tools</p>
                     </div>
                   )}
                   
-                  <div>
-                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-monokai-text">Sound Effect</label>
-                    <div className="flex space-x-2">
-                      <select
-                        value={config[hookType]?.sound || ''}
-                        onChange={(e) => {
-                          const newSound = e.target.value
-                          updateHookConfig(hookType, 'sound', newSound)
-                          // Preview the sound when selected
-                          if (newSound) {
-                            previewSound(newSound)
-                          }
-                        }}
-                        className="flex-1 p-2 border border-gray-300 dark:border-monokai-border rounded-md text-sm bg-white dark:bg-monokai-bgDark text-gray-900 dark:text-monokai-text focus:ring-2 focus:ring-blue-500 dark:focus:ring-monokai-green focus:border-transparent"
-                      >
-                        <option value="">No sound</option>
-                        {sounds.map(sound => (
-                          <option key={sound.filename} value={sound.filename}>
-                            {sound.filename}
-                          </option>
-                        ))}
-                      </select>
-                      
-                      {config[hookType]?.sound && (
-                        <button
-                          onClick={() => previewSound(config[hookType].sound)}
-                          className="px-3 py-2 bg-green-600 dark:bg-monokai-green text-white dark:text-monokai-bg rounded-md hover:bg-green-700 dark:hover:bg-monokai-green/80 text-sm flex items-center transition-colors"
-                          title="Preview sound"
-                        >
-                          🔊
-                        </button>
-                      )}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-monokai-text">Sound Effects (Up to 3, plays randomly)</label>
+                    <div className="space-y-2">
+                      {[0, 1, 2].map((soundIndex) => (
+                        <div key={soundIndex} className="flex space-x-2">
+                          <select
+                            value={hookConfig.sounds?.[soundIndex] || ''}
+                            onChange={(e) => {
+                              const newSound = e.target.value
+                              updateHookSound(hookType, configIndex, soundIndex, newSound)
+                              // Preview the sound when selected
+                              if (newSound) {
+                                previewSound(newSound)
+                              }
+                            }}
+                            className="flex-1 p-2 border border-gray-300 dark:border-monokai-border rounded-md text-sm bg-white dark:bg-monokai-bgDark text-gray-900 dark:text-monokai-text focus:ring-2 focus:ring-blue-500 dark:focus:ring-monokai-green focus:border-transparent"
+                          >
+                            <option value="">No sound</option>
+                            {sounds.map(sound => (
+                              <option key={sound.filename} value={sound.filename}>
+                                {sound.filename}
+                              </option>
+                            ))}
+                          </select>
+                          
+                          {hookConfig.sounds?.[soundIndex] && (
+                            <button
+                              onClick={() => previewSound(hookConfig.sounds[soundIndex])}
+                              className="px-3 py-2 bg-green-600 dark:bg-monokai-green text-white dark:text-monokai-bg rounded-md hover:bg-green-700 dark:hover:bg-monokai-green/80 text-sm flex items-center transition-colors"
+                              title="Preview sound"
+                            >
+                              🔊
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
                   
@@ -265,8 +352,8 @@ export default function HookConfig({ sounds }) {
                     <label className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={config[hookType]?.notifications || false}
-                        onChange={(e) => updateHookConfig(hookType, 'notifications', e.target.checked)}
+                        checked={hookConfig.notifications || false}
+                        onChange={(e) => updateHookConfig(hookType, configIndex, 'notifications', e.target.checked)}
                         className="mr-2"
                       />
                       <span className="text-sm text-gray-700 dark:text-monokai-text">Browser Notifications</span>
@@ -279,11 +366,15 @@ export default function HookConfig({ sounds }) {
                       type="number"
                       min="1"
                       max="300"
-                      value={config[hookType]?.timeout || 60}
-                      onChange={(e) => updateHookConfig(hookType, 'timeout', parseInt(e.target.value))}
+                      value={hookConfig.timeout || 60}
+                      onChange={(e) => updateHookConfig(hookType, configIndex, 'timeout', parseInt(e.target.value))}
                       className="w-full p-2 border rounded-md text-sm"
                     />
                   </div>
+                </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

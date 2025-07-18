@@ -147,17 +147,26 @@ function App() {
     const config = hookConfigRef.current[log.hook_type]
     console.log(`🎯 HANDLE LOG ENTRY - Config for hook type "${log.hook_type}":`, config)
     
-    if (config && config.enabled && config.sound) {
-      console.log('✅ HANDLE LOG ENTRY - Sound is configured and enabled, playing:', config.sound)
-      playSound(config.sound)
+    if (config && config.enabled) {
+      // Check for multiple sounds (new format) or single sound (legacy format)
+      const availableSounds = config.sounds 
+        ? config.sounds.filter(s => s !== '') 
+        : (config.sound ? [config.sound] : [])
+      
+      if (availableSounds.length > 0) {
+        // Pick a random sound from available sounds
+        const randomSound = availableSounds[Math.floor(Math.random() * availableSounds.length)]
+        console.log('✅ HANDLE LOG ENTRY - Playing random sound:', randomSound, 'from', availableSounds)
+        playSound(randomSound)
+      } else {
+        console.log('❌ HANDLE LOG ENTRY - No sounds configured for hook type')
+      }
     } else {
-      console.log('❌ HANDLE LOG ENTRY - No sound configured or hook disabled')
+      console.log('❌ HANDLE LOG ENTRY - Hook disabled or not configured')
       if (!config) {
         console.log('   - No config found for hook type:', log.hook_type)
       } else if (!config.enabled) {
         console.log('   - Hook type is disabled')
-      } else if (!config.sound) {
-        console.log('   - No sound file assigned to hook type')
       }
     }
     
