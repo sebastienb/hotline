@@ -1,0 +1,2 @@
+This is a test file to trigger the Write tool hook.
+Now edited to trigger the Edit tool hook.
