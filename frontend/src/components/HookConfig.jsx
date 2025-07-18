@@ -168,7 +168,7 @@ export default function HookConfig({ sounds }) {
         // Only add logging command - sounds will be handled by frontend
         commands.push({
           type: "command", 
-          command: `curl -X POST ${backendUrl}/api/logs -H "Content-Type: application/json" -d '{"hookType":"${hookType}","toolName":"'$TOOL_NAME'","message":"Hook triggered","sessionId":"'$session_id'"}'`,
+          command: `curl -X POST ${backendUrl}/api/logs -H "Content-Type: application/json" -d '{"hookType":"${hookType}","toolName":"'"$TOOL_NAME"'","message":"Hook triggered","sessionId":"'"$session_id"'"}'`,
           timeout: 5
         })
         
