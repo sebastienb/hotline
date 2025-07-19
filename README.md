@@ -1,6 +1,6 @@
 # 🔥 Hotline
 
-Local web app for managing Claude Code hooks with sound effects, native notifications, and live event logging.
+Local web app for managing Claude Code hooks with sound effects, native notifications, real-time event logging, and dark mode support.
 
 ## 🚀 Quick Start
 
@@ -30,10 +30,12 @@ hotline/
 ## 🎯 Features
 
 - **Hook Configuration**: Enable/disable Claude Code hook types with custom settings
-- **Sound Manager**: Upload and assign MP3/WAV files to hooks
-- **Event Logger**: Real-time logging of hook activity with filtering
+- **Sound Manager**: Upload and assign MP3/WAV files to hooks (supports multiple sounds per hook)
+- **Event Logger**: Real-time logging with WebSocket streaming, filtering, and CSV export
 - **Native Notifications**: Browser notifications for hook events
 - **Config Generator**: Auto-generate Claude-compatible settings.json
+- **Dark Mode**: Toggle between light and Monokai dark themes
+- **Test Mode**: Built-in test hook functionality to verify your setup
 
 ## 🔧 Usage
 
@@ -48,6 +50,7 @@ hotline/
 |------|----------|
 | Audio Files | `~/.hotline/sounds/` |
 | Event Logs | `~/.hotline/hooks.db` |
+| UI Configuration | `~/.hotline/hook-ui-config.json` |
 | Claude Config | `~/.claude/settings.json` |
 
 ## 🔐 Security
@@ -62,6 +65,7 @@ hotline/
 - **Frontend**: `npm run dev:frontend` (port 3000)
 - **Backend**: `npm run dev:backend` (port 3001)
 - **Both**: `npm run dev` (recommended)
+- **Production**: `npm run start` (builds frontend and starts backend)
 
 ## 📋 API Endpoints
 
@@ -69,9 +73,15 @@ hotline/
 - `POST /api/hooks` - Save hooks configuration
 - `GET /api/logs` - Fetch event logs with filters
 - `POST /api/logs` - Insert new log entry
+- `DELETE /api/logs` - Clear all logs
 - `POST /api/sounds` - Upload sound file
 - `GET /api/sounds` - List sound files
 - `DELETE /api/sounds/:filename` - Delete sound file
+- `GET /api/sounds/play/:filename` - Stream audio file
+- `GET /api/hook-ui-config` - Load UI configuration
+- `POST /api/hook-ui-config` - Save UI configuration
+- `POST /api/test-hook` - Trigger test hook event
+- WebSocket on `/ws` - Real-time event streaming
 
 ## 🔗 Claude Code Integration
 
@@ -99,3 +109,10 @@ Example generated hook:
   }
 }
 ```
+
+## 🔧 Tech Stack
+
+- **Frontend**: React 19 + Vite 7 + Tailwind CSS 4
+- **Backend**: Node.js + Express + SQLite (via better-sqlite3)
+- **Real-time**: WebSocket for live event streaming
+- **UI**: Responsive design with Monokai dark theme
